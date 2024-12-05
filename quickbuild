@@ -1,0 +1,44 @@
+#!/bin/sh
+
+
+
+#-ldflags "-X main.GitRevision=$(REVISION) -X main.GitBranch=$(BRANCH) -X main.GitVersion=$(VER) -X main.GitTimestamp=$(TIME)"
+
+
+# APPNAME := bucket-migrator
+# PACKAGE := github.com/cloudian/bucket-migrator/version
+# REVISION := $(shell git rev-parse --short HEAD)
+# BRANCH := $(shell git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n')
+# TIME := $(shell date +%d%_b%_y-%I:%M%_\#p)
+
+THDIR=.
+
+R=$(cd $THDIR && git rev-parse --short HEAD)
+B=$(cd $THDIR && git rev-parse --abbrev-ref HEAD | tr -d '\040\011\012\015\n')
+GV=$(cd $THDIR && cat ./VERSION)
+TS=$(date +%d%_b%_y-%I:%M%p)
+export LF="-X main.GitRevision=\"$R\" -X main.GitBranch=\"$B\" -X main.GitVersion=\"$GV\" -X main.GitTimestamp=\"$TS\""
+
+A=$(arch)
+U=$(uname)
+if [[ "$U" == "Darwin" ]]; then
+#	if [[ "$A" == "i386" ]]; then
+	if ! GOOS=darwin GOARCH=amd64 go build -ldflags "$LF" -o ./aws-alfredo-mac-amd64; then
+		echo "Failed to build for mac-amd64"
+		exit 1
+	fi
+#	else
+	if ! GOOS=darwin GOARCH=arm64 go build -ldflags "$LF" -o ./aws-alfredo-mac-arm64; then
+		echo "Failed to build for mac-arm64"
+		exit 1
+	fi
+#	fi
+	if ! lipo -create -output aws-alfredo-mac aws-alfredo-mac-amd64 aws-alfredo-mac-arm64; then
+		echo "Failed to create universal binary"
+		exit 1
+	fi
+	rm -rf aws-alfredo-mac-amd64 aws-alfredo-mac-arm64 
+else
+	go build -ldflags "$LF" -o ./aws-alfredo
+fi
+
