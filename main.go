@@ -13,13 +13,14 @@ type argStruct struct {
 	//verbose mode
 	verbose bool
 	//show version and exit
-	ver        bool
-	force      bool
-	debug      bool
-	show       bool
-	dontSave   bool
-	headBucket bool
-	details    S3Details
+	ver         bool
+	force       bool
+	debug       bool
+	show        bool
+	dontSave    bool
+	headBucket  bool
+	listBuckets bool
+	details     S3Details
 }
 
 const VERBOSE_ENV = "VERBOSE"
@@ -39,6 +40,7 @@ func parseArgs() *argStruct {
 	flag.BoolVar(&args.show, "show", false, "show mode")
 	flag.BoolVar(&args.dontSave, "dont-save", false, "dont save the config file")
 	flag.BoolVar(&args.headBucket, "head-bucket", false, "head the bucket")
+	flag.BoolVar(&args.listBuckets, "list-buckets", false, "list all buckets for this profile")
 	flag.StringVar(&args.details.Bucket, "bucket", "", "Override config and use this bucket instead")
 	flag.StringVar(&args.details.Region, "region", "", "Override config and use this region instead")
 	flag.StringVar(&args.details.Credentials.AccessKeyID, "accessKeyId", "", "Override config and use this accessKeyId instead")
@@ -141,6 +143,13 @@ func main() {
 	if args.headBucket {
 		if err := args.details.HeadBucket(); err != nil {
 			fmt.Println("Failed to head bucket: ", err)
+			os.Exit(1)
+		}
+	}
+
+	if args.listBuckets {
+		if err := args.details.ListBuckets(); err != nil {
+			fmt.Println("Failed to list buckets: ", err)
 			os.Exit(1)
 		}
 	}

@@ -20,6 +20,10 @@ type S3Details struct {
 }
 
 func (details *S3Details) GetSession() alfredo.S3ClientSession {
+	if len(details.Profile) == 0 {
+		details.Profile = "default"
+	}
+
 	var s3c alfredo.S3ClientSession
 	s3c = s3c.WithEndpoint(details.Endpoint).WithBucket(details.Bucket).WithRegion(details.Region)
 
@@ -43,9 +47,6 @@ func (details *S3Details) GetSession() alfredo.S3ClientSession {
 }
 
 func (details *S3Details) HeadBucket() error {
-	if len(details.Profile) == 0 {
-		details.Profile = "default"
-	}
 	s3c := details.GetSession()
 	b, err := s3c.HeadBucket()
 	if err != nil {
@@ -67,6 +68,28 @@ func (details *S3Details) HeadBucket() error {
 		return err
 	}
 	fmt.Println("output from head bucket: " + output.String())
+	fmt.Println("raw output:")
+	fmt.Println(alfredo.PrettyPrint(output))
+	return nil
+}
+
+func (details *S3Details) ListBuckets() error {
+	if len(details.Profile) == 0 {
+		details.Profile = "default"
+	}
+	s3c := details.GetSession()
+	s := s3c.ListBuckets()
+	fmt.Println("all buckets available to this profile:")
+	fmt.Println(alfredo.PrettyPrint(s))
+
+	fmt.Println("Now directly from s3 client provided by aws sdk")
+
+	output, err := s3c.Client.ListBuckets(&s3.ListBucketsInput{})
+
+	if err != nil {
+		return err
+	}
+	fmt.Println("output from list buckets: " + output.String())
 	fmt.Println("raw output:")
 	fmt.Println(alfredo.PrettyPrint(output))
 	return nil
